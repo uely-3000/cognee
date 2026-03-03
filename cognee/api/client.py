@@ -54,9 +54,8 @@ def _register_community_adapters() -> None:
 
     if vector_provider == "qdrant" or vector_handler == "qdrant":
         try:
-            from cognee_community_vector_adapter_qdrant import register as register_qdrant
+            import cognee_community_vector_adapter_qdrant.register  # noqa: F401
 
-            register_qdrant()
             logger.info("Registered Cognee community Qdrant adapter.")
         except ImportError as exc:
             raise RuntimeError(
@@ -70,9 +69,8 @@ def _register_community_adapters() -> None:
 
     if uses_falkor:
         try:
-            from cognee_community_hybrid_adapter_falkor import register as register_falkor
+            import cognee_community_hybrid_adapter_falkor.register  # noqa: F401
 
-            register_falkor()
             logger.info("Registered Cognee community FalkorDB adapter.")
         except ImportError as exc:
             raise RuntimeError(
