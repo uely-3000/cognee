@@ -45,6 +45,45 @@ from cognee.modules.users.methods.get_authenticated_user import REQUIRE_AUTHENTI
 setup_logging()
 logger = get_logger()
 
+
+def _register_community_adapters() -> None:
+    vector_provider = os.getenv("VECTOR_DB_PROVIDER", "").strip().lower()
+    graph_provider = os.getenv("GRAPH_DATABASE_PROVIDER", "").strip().lower()
+    vector_handler = os.getenv("VECTOR_DATASET_DATABASE_HANDLER", "").strip().lower()
+    graph_handler = os.getenv("GRAPH_DATASET_DATABASE_HANDLER", "").strip().lower()
+
+    if vector_provider == "qdrant" or vector_handler == "qdrant":
+        try:
+            from cognee_community_vector_adapter_qdrant import register as register_qdrant
+
+            register_qdrant()
+            logger.info("Registered Cognee community Qdrant adapter.")
+        except ImportError as exc:
+            raise RuntimeError(
+                "VECTOR_DB_PROVIDER is set to 'qdrant' but the Qdrant community adapter is "
+                "not installed. Install 'cognee-community-vector-adapter-qdrant'."
+            ) from exc
+
+    uses_falkor = graph_provider == "falkor" or vector_provider == "falkor"
+    uses_falkor = uses_falkor or graph_handler == "falkor_graph_local"
+    uses_falkor = uses_falkor or vector_handler == "falkor_vector_local"
+
+    if uses_falkor:
+        try:
+            from cognee_community_hybrid_adapter_falkor import register as register_falkor
+
+            register_falkor()
+            logger.info("Registered Cognee community FalkorDB adapter.")
+        except ImportError as exc:
+            raise RuntimeError(
+                "FalkorDB provider/handler is configured but the FalkorDB community adapter is "
+                "not installed. Install 'cognee-community-hybrid-adapter-falkor'."
+            ) from exc
+
+
+_register_community_adapters()
+
+
 if os.getenv("ENV", "prod") == "prod":
     try:
         import sentry_sdk

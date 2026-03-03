@@ -32,14 +32,19 @@ COPY README.md pyproject.toml uv.lock entrypoint.sh ./
 
 # Install the project's dependencies using the lockfile and settings
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --extra debug --extra api --extra postgres --extra neo4j --extra llama-index --extra ollama --extra mistral --extra groq --extra anthropic --extra chromadb --frozen --no-install-project --no-dev --no-editable
+    uv sync --extra debug --extra api --extra postgres --frozen --no-install-project --no-dev --no-editable
 
 # Then, add the rest of the project source code and install it
 # Installing separately from its dependencies allows optimal layer caching
 COPY ./cognee /app/cognee
 COPY ./distributed /app/distributed
 RUN --mount=type=cache,target=/root/.cache/uv \
-uv sync --extra debug --extra api --extra postgres --extra neo4j --extra llama-index --extra ollama --extra mistral --extra groq --extra anthropic --extra chromadb --frozen --no-dev --no-editable
+uv sync --extra debug --extra api --extra postgres --frozen --no-dev --no-editable
+
+# Install community adapters for Qdrant and FalkorDB support.
+RUN /app/.venv/bin/pip install --no-cache-dir \
+    cognee-community-vector-adapter-qdrant==0.2.2 \
+    cognee-community-hybrid-adapter-falkor==0.2.2
 
 FROM python:3.12-slim-bookworm
 
@@ -61,5 +66,9 @@ ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONPATH=/app
 # ENV LOG_LEVEL=ERROR
 ENV PYTHONUNBUFFERED=1
+ENV DATA_ROOT_DIRECTORY=/app/.cognee_data
+ENV SYSTEM_ROOT_DIRECTORY=/app/.cognee_system
+
+RUN mkdir -p /app/.cognee_data /app/.cognee_system
 
 ENTRYPOINT ["/app/entrypoint.sh"]
