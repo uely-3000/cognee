@@ -8,10 +8,10 @@ This guide deploys the Cognee API from a monorepo subdirectory on Coolify, using
 
 ## 1) Coolify Service Setup
 
-- Source: your Git repository
+- Source: your Git repository (the cognee fork, e.g. `uely-3000/cognee`)
 - Build Pack: Dockerfile
-- Base Directory: `cognee`
-- Dockerfile Location: `Dockerfile`
+- Base Directory: `/` (the Dockerfile is at the repo root)
+- Dockerfile Location: `/Dockerfile`
 - Exposed Port: `8000`
 
 The container starts `gunicorn` via `entrypoint.sh` and listens on `0.0.0.0:8000`.
