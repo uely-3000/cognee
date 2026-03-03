@@ -42,9 +42,12 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 uv sync --extra debug --extra api --extra postgres --frozen --no-dev --no-editable
 
 # Install community adapters for Qdrant and FalkorDB support.
-RUN /app/.venv/bin/pip install --no-cache-dir \
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv pip install --no-deps \
     cognee-community-vector-adapter-qdrant==0.2.2 \
-    cognee-community-hybrid-adapter-falkor==0.2.2
+    cognee-community-hybrid-adapter-falkor==0.2.2 \
+    qdrant-client>=1.16.0 \
+    falkordb>=1.0.9
 
 FROM python:3.12-slim-bookworm
 
