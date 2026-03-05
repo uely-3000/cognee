@@ -24,6 +24,7 @@ class CompletionRetriever(BaseRetriever):
         system_prompt_path: str = "answer_simple_question.txt",
         system_prompt: Optional[str] = None,
         top_k: Optional[int] = 1,
+        node_name: Optional[List[str]] = None,
         session_id: Optional[str] = None,
         response_model: Type = str,
     ):
@@ -34,13 +35,18 @@ class CompletionRetriever(BaseRetriever):
         self.system_prompt = system_prompt
         self.session_id = session_id
         self.response_model = response_model
+        self.node_name = node_name
 
     async def get_retrieved_objects(self, query: str) -> Any:
         vector_engine = get_vector_engine()
 
         try:
             found_chunks = await vector_engine.search(
-                "DocumentChunk_text", query, limit=self.top_k, include_payload=True
+                "DocumentChunk_text",
+                query,
+                limit=self.top_k,
+                include_payload=True,
+                node_name=self.node_name,
             )
 
             return found_chunks

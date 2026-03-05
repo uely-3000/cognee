@@ -36,6 +36,8 @@ async def resolve_data_directories(
             secret=s3_config.aws_secret_access_key,
             token=s3_config.aws_session_token,
             anon=False,
+            endpoint_url=s3_config.aws_endpoint_url,
+            client_kwargs={"region_name": s3_config.aws_region},
         )
 
     for item in data:

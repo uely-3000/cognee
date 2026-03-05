@@ -65,13 +65,14 @@ async def get_search_type_retriever_instance(
         SearchType.SUMMARIES: (SummariesRetriever, {"top_k": top_k, "session_id": session_id}),
         SearchType.CHUNKS: (
             ChunksRetriever,
-            {"top_k": top_k},
+            {"top_k": top_k, "node_name": node_name},
         ),
         SearchType.RAG_COMPLETION: (
             CompletionRetriever,
             {
                 "system_prompt_path": system_prompt_path,
                 "top_k": top_k,
+                "node_name": node_name,
                 "system_prompt": system_prompt,
                 "session_id": session_id,
                 "response_model": retriever_specific_config.get("response_model", str),
