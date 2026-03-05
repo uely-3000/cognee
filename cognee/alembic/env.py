@@ -1,4 +1,8 @@
 import asyncio
+import json as _json
+import os
+import ssl as _ssl
+
 from alembic import context
 from logging.config import fileConfig
 from sqlalchemy import pool
@@ -7,40 +11,41 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from cognee.infrastructure.databases.relational import get_relational_engine, Base
 
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
 config = context.config
 
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-
 target_metadata = Base.metadata
 
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
+
+def _migration_connect_args():
+    """Build connect_args for the Alembic migration engine.
+
+    Reads DATABASE_CONNECT_ARGS (JSON) for driver-level args like
+    statement_cache_size, and DATABASE_SSL_CA_CERT (file path) to
+    create an ssl.SSLContext for verified TLS connections.
+    """
+    args = {}
+    raw = os.environ.get("DATABASE_CONNECT_ARGS", "")
+    if raw:
+        try:
+            parsed = _json.loads(raw)
+            if isinstance(parsed, dict):
+                args = parsed
+        except _json.JSONDecodeError:
+            pass
+
+    ca_cert = os.environ.get("DATABASE_SSL_CA_CERT")
+    if ca_cert and "ssl" not in args:
+        ctx = _ssl.create_default_context(cafile=ca_cert)
+        args["ssl"] = ctx
+
+    return args
 
 
 def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode.
-
-    This configures the context with just a URL
-    and not an Engine, though an Engine is acceptable
-    here as well.  By skipping the Engine creation
-    we don't even need a DBAPI to be available.
-
-    Calls to context.execute() here emit the given string to the
-    script output.
-
-    """
+    """Run migrations in 'offline' mode."""
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
@@ -61,14 +66,13 @@ def do_run_migrations(connection: Connection) -> None:
 
 
 async def run_async_migrations() -> None:
-    """In this scenario we need to create an Engine
-    and associate a connection with the context.
-    """
+    """Create an Engine and associate a connection with the context."""
 
     connectable = async_engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        connect_args=_migration_connect_args(),
     )
 
     async with connectable.connect() as connection:
@@ -86,7 +90,6 @@ def run_migrations_online() -> None:
 db_engine = get_relational_engine()
 
 print("Using database:", db_engine.db_uri)
-# In case db_uri is a SQLAlchemy URL object, convert it to string
 db_uri = (
     db_engine.db_uri
     if isinstance(db_engine.db_uri, str)

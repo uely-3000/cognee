@@ -1,6 +1,20 @@
-from sqlalchemy import URL
-from .sqlalchemy.SqlAlchemyAdapter import SQLAlchemyAdapter
+import os
+import ssl as _ssl
 from functools import lru_cache
+
+from sqlalchemy import URL
+
+from .sqlalchemy.SqlAlchemyAdapter import SQLAlchemyAdapter
+
+
+def _build_connect_args(database_connect_args):
+    """Merge SSL context from DATABASE_SSL_CA_CERT into connect_args."""
+    args = dict(database_connect_args) if database_connect_args else {}
+    ca_cert = os.environ.get("DATABASE_SSL_CA_CERT")
+    if ca_cert and "ssl" not in args:
+        ctx = _ssl.create_default_context(cafile=ca_cert)
+        args["ssl"] = ctx
+    return args or None
 
 
 @lru_cache
@@ -45,9 +59,8 @@ def create_relational_engine(
     elif db_provider == "postgres":
         try:
             # Test if asyncpg is available
-            import asyncpg
+            import asyncpg  # noqa: F401
 
-            # Handle special characters in username and password like # or @
             connection_string = URL.create(
                 "postgresql+asyncpg",
                 username=db_username,
@@ -67,6 +80,6 @@ def create_relational_engine(
 
     return SQLAlchemyAdapter(
         connection_string,
-        connect_args=database_connect_args,
+        connect_args=_build_connect_args(database_connect_args),
         pool_args=pool_args,
     )
