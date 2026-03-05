@@ -67,7 +67,7 @@ class DoclingLoader(LoaderInterface):
             TableFormerMode,
             TableStructureOptions,
         )
-        from docling.document_converter import DocumentConverter
+        from docling.document_converter import DocumentConverter, PdfFormatOption
 
         pdf_options = PdfPipelineOptions(
             do_ocr=True,
@@ -82,7 +82,9 @@ class DoclingLoader(LoaderInterface):
             ),
             accelerator_options=AcceleratorOptions(device=AcceleratorDevice.CPU),
         )
-        return DocumentConverter(pipeline_options={InputFormat.PDF: pdf_options})
+        return DocumentConverter(
+            format_options={InputFormat.PDF: PdfFormatOption(pipeline_options=pdf_options)}
+        )
 
     def _get_converter(self):
         if self._converter is None:
