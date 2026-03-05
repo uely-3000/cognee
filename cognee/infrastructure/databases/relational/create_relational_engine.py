@@ -1,6 +1,5 @@
 import os
 import ssl as _ssl
-from functools import lru_cache
 
 from sqlalchemy import URL
 
@@ -17,7 +16,6 @@ def _build_connect_args(database_connect_args):
     return args or None
 
 
-@lru_cache
 def create_relational_engine(
     db_path: str,
     db_name: str,
